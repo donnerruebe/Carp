@@ -234,7 +234,7 @@ class Mesh(object):
         glEnd()
         glEndList()
         
-    def Draw(self):
+    def draw(self):
         glCallList(self.display_list);
         
 
@@ -272,6 +272,13 @@ def drawGrid():
         glVertex3i(-5, y, 0)
         glVertex3i(5, y, 0)
     glEnd()
+
+def closestPointOnLine(point, line_start, line_end):
+    d_line = line_end - line_start
+    d_line /= np.linalg.norm(d_line)
+    print d_line
+    d_point = point - line_start
+    return line_start + d_line * np.dot(d_line, d_point)
 
 def main():
     pygame.init()
@@ -319,7 +326,11 @@ def main():
     
     angles = [0,0,0,0,0,0,0]
     angular_velocities = [.1,.1,.1,.1,.1,.1,.1]
+    
+    # TODO: clickable object class
     target = np.array([3, 0, 3, 1.0])
+    target_hovered = False
+    target_clicked = False
 
     camera_angles = [0,-90]
     camera_position = np.array([0.0,-7.0,1.0,1.0])
@@ -335,6 +346,10 @@ def main():
     glEnable(GL_DEPTH_TEST)
     glClearColor(0.75,0.75,0.75,1.0)
     glPointSize(16.0)
+    glEnable(GL_POINT_SMOOTH)
+    glEnable(GL_LINE_SMOOTH)
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     
     prev_timestamp = pygame.time.get_ticks()
     frame_time = 0
@@ -352,7 +367,7 @@ def main():
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
         
-        projection_matrix = np.array(glGetFloatv(GL_PROJECTION_MATRIX))
+        projection_matrix = np.array(glGetFloatv(GL_PROJECTION_MATRIX).transpose())
         inverted_projection_matrix = np.linalg.inv(projection_matrix)
         
         '''projection_matrix = Matrix.rotation_z(camera_angles[0]) * Matrix.rotation_y(camera_angles[1])#Matrix.perspective(camera_clip_near, camera_clip_far, 1, 1)# Matrix.translation(camera_position) * 
@@ -379,7 +394,9 @@ def main():
         
         mouse_vel = pygame.mouse.get_rel()
         mouse_pos = pygame.mouse.get_pos()
-        normalized_mouse_pos = np.array([mouse_pos[0]*2.0/display[0] - 1.0, 1.0 - mouse_pos[1]*2.0/display[1], 1.0, 1.0])
+        normalized_mouse_pos = np.array([mouse_pos[0]*2.0/display[0] - 1.0, 1.0 - mouse_pos[1]*2.0/display[1], 0.95, 1.0])
+        mouse_world_pos = np.dot(inverted_projection_matrix, normalized_mouse_pos)
+        mouse_world_pos /= mouse_world_pos[3]
         mouse_buttons = pygame.mouse.get_pressed()
         keys = pygame.key.get_pressed()
 
@@ -388,20 +405,18 @@ def main():
             camera_angles[0] += mouse_vel[0] * mouse_sensitivity * frame_time
             camera_angles[1] += mouse_vel[1] * mouse_sensitivity * frame_time
         movement_input = np.array([keys[pygame.K_d] - keys[pygame.K_a], keys[pygame.K_SPACE] - keys[pygame.K_c], keys[pygame.K_w] - keys[pygame.K_s], 0])
-        movement_direction = np.dot(projection_matrix, movement_input)
+        movement_direction = np.dot(projection_matrix.transpose(), movement_input)
         speed = 0.0005 if keys[pygame.K_LSHIFT] else 0.005
-        camera_position += movement_direction * speed * frame_time 
+        camera_position += movement_direction * speed * frame_time
 
 # moving the target
         normalized_screen_target = np.dot(projection_matrix, target)
-        screen_target = np.multiply(normalized_screen_target[0:2] * 0.5 + [0.5, 0.5], display)
-        mouse_distance = np.linalg.norm(screen_target - mouse_pos[0:2])
-        #print normalized_screen_target, screen_target, mouse_distance
-        if mouse_buttons[0]:
-            target = np.dot(inverted_projection_matrix.transpose(), normalized_mouse_pos)
-            #target[0] += (mouse_vel[0] * projection_matrix[0] + mouse_vel[1] * projection_matrix[4]) * mouse_sensitivity
-            #target[1] += (mouse_vel[0] * projection_matrix[1] + mouse_vel[1] * projection_matrix[5]) * mouse_sensitivity
-            #target[2] += (mouse_vel[0] * projection_matrix[2] + mouse_vel[1] * projection_matrix[6]) * mouse_sensitivity
+        normalized_screen_target /= normalized_screen_target[3]
+        mouse_distance = np.linalg.norm(np.multiply(normalized_screen_target[0:2] - normalized_mouse_pos[0:2], display))
+        target_hovered = (mouse_distance < 16.0)
+        target_clicked = mouse_buttons[0] and (target_hovered or target_clicked)
+        if target_clicked:
+            target = closestPointOnLine(target, camera_position, mouse_world_pos)
 
 # rendering
         drawGrid()
@@ -410,7 +425,7 @@ def main():
         glEnable(GL_LIGHTING)
         glPushMatrix()
         for i in range(len(meshes)):
-            meshes[i].Draw()
+            meshes[i].draw()
             glTranslatef(translations[i][0], translations[i][1], translations[i][2])
             glRotatef(angles[i], axes[i][0], axes[i][1], axes[i][2])
             angles[i] += angular_velocities[i] * frame_time
@@ -421,7 +436,10 @@ def main():
         
         # draw target
         glBegin(GL_POINTS)
-        glColor3f(1,1,1)
+        if target_hovered:
+            glColor3f(1,0,0)
+        else:
+            glColor3f(.5,.5,.5)
         glVertex4f(target[0], target[1], target[2], target[3])
         glEnd()
         glBegin(GL_LINES)

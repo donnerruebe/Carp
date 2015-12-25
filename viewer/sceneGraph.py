@@ -9,7 +9,7 @@ PathComponent
 
 MESH'''
 
-import opengl
+import OpenGL.GL
 import numpy as np
 
 class GroupNode(object):
@@ -53,6 +53,8 @@ class MeshNode:
     '''
 
     def draw(self,matrix):
+        glLoadMatrix(matrix.transpose())
+        self.mesh.draw()
         print "load Matrix=>",matrix
         print "ich bin ein Baum"
     
