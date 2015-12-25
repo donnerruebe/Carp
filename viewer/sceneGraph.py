@@ -9,7 +9,7 @@ PathComponent
 
 MESH'''
 
-import OpenGL.GL
+from OpenGL.GL import *
 import numpy as np
 
 class GroupNode(object):
@@ -26,7 +26,10 @@ class GroupNode(object):
         self.drawChildren(matrix.dot(self.basematrix.dot(self.movematrix)))
         
     def setDefaultMatrix(self,matrix):
-        basematrix=matrix
+        self.basematrix=matrix
+        
+    def getDefaultMatrix(self):
+        return self.basematrix
         
     def getMatrix(self):
         return self.movematrix
@@ -47,7 +50,7 @@ class GroupNode(object):
     
 class MeshNode:
     def __init__(self):
-        self.mesh
+        self.mesh=None
         
     def setMesh(self,mesh):
         self.mesh=mesh
@@ -57,8 +60,6 @@ class MeshNode:
     '''
 
     def draw(self,matrix):
-        glLoadMatrix(matrix.transpose())
+        glLoadMatrixf(matrix.transpose())
         self.mesh.draw()
-        print "load Matrix=>",matrix
-        print "ich bin ein Baum"
     

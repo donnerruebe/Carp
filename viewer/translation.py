@@ -7,6 +7,9 @@ import numpy
 __version__ = '0.1'
 
 
+def unit_vector(v):
+    return v / numpy.linalg.norm(v)
+
 def identity_matrix():
     return numpy.identity(4)
 
@@ -20,31 +23,30 @@ def translation_matrix(direction):
 def translation_from_matrix(matrix):
     return numpy.array(matrix, copy=False)[:3, 3].copy()
 
+def rotation_from_euler(angles):
+    result = numpy.identity(4)
+    if angles == (0,0,0):
+        return result
+    
+    cos_psi = math.cos(angles[0]);
+    sin_psi = math.sin(angles[0]);
+    cos_theta = math.cos(angles[1]);
+    sin_theta = math.sin(angles[1]);
+    cos_phi = math.cos(angles[2]);
+    sin_phi = math.sin(angles[2]);
 
-def reflection_matrix(point, normal):
-    normal = unit_vector(normal[:3])
-    M = numpy.identity(4)
-    M[:3, :3] -= 2.0 * numpy.outer(normal, normal)
-    M[:3, 3] = (2.0 * numpy.dot(point[:3], normal)) * normal
-    return M
+    result[0,0] = cos_theta * cos_psi;
+    result[0,1] = -cos_phi * sin_psi + sin_phi * sin_theta * cos_psi;
+    result[0,2] = sin_phi * sin_psi + cos_phi * sin_theta * cos_psi;
+      
+    result[1,0] = cos_theta * sin_psi;
+    result[1,1] = cos_phi * cos_psi + sin_phi * sin_theta * sin_psi;
+    result[1,2] = -sin_phi * cos_psi + cos_phi * sin_theta * sin_psi;
 
-
-def reflection_from_matrix(matrix):
-    M = numpy.array(matrix, dtype=numpy.float64, copy=False)
-    # normal: unit eigenvector corresponding to eigenvalue -1
-    w, V = numpy.linalg.eig(M[:3, :3])
-    i = numpy.where(abs(numpy.real(w) + 1.0) < 1e-8)[0]
-    if not len(i):
-        raise ValueError("no unit eigenvector corresponding to eigenvalue -1")
-    normal = numpy.real(V[:, i[0]]).squeeze()
-    # point: any unit eigenvector corresponding to eigenvalue 1
-    w, V = numpy.linalg.eig(M)
-    i = numpy.where(abs(numpy.real(w) - 1.0) < 1e-8)[0]
-    if not len(i):
-        raise ValueError("no unit eigenvector corresponding to eigenvalue 1")
-    point = numpy.real(V[:, i[-1]]).squeeze()
-    point /= point[3]
-    return point, normal
+    result[2,0] = -sin_theta;
+    result[2,1] = sin_phi * cos_theta;
+    result[2,2] = cos_phi * cos_theta;
+    return result
 
 
 def rotation_matrix(angle, direction, point=None):
@@ -122,7 +124,7 @@ def scale_from_matrix(matrix):
         w, V = numpy.linalg.eig(M33)
         i = numpy.where(abs(numpy.real(w) - factor) < 1e-8)[0][0]
         direction = numpy.real(V[:, i]).squeeze()
-        direction /= vector_norm(direction)
+        direction /= numpy.linalg.norm(direction)
     except IndexError:
         # uniform scaling
         factor = (factor + 2.0) / 3.0
