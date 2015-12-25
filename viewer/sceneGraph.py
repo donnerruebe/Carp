@@ -15,26 +15,30 @@ import numpy as np
 class GroupNode(object):
     def __init__(self):
         self.list=[]
-        self.translationmatrix=np.array()
+        self.basematrix=np.identity(4)
+        self.movematrix=np.identity(4)
         
     def addNode(self,obj):
         if(True):
             self.list.append(obj)
     
     def draw(self,matrix):
-        self.drawChildren(matrix.dot(self.translationmatrix))
+        self.drawChildren(matrix.dot(self.basematrix.dot(self.movematrix)))
+        
+    def setDefaultMatrix(self,matrix):
+        basematrix=matrix
         
     def getMatrix(self):
-        return self.translationmatrix
+        return self.movematrix
     
     def setMatrix(self,matrix):
-        self.translationmatrix=matrix
+        self.movematrix=matrix
     
     def multMatrix(self,matrix):
-        self.translationmatrix=self.translationmatrix.dot(matrix)
+        self.movematrix=self.movematrix.dot(matrix)
     
     def rMultMatrix(self,matrix):
-        self.translationmatrix=matrix.dot(self.translationmatrix)
+        self.movematrix=matrix.dot(self.movematrix)
         
     def drawChildren(self,matrix):
         for item in self.list:
