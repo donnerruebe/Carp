@@ -53,8 +53,13 @@ for obj in selection:
         
         # write triangle data
         for poly in mesh.polygons:
+            uv_layer = mesh.uv_layers.active.data
             for i in range(0, len(poly.vertices) - 2):
                 f.write(pack('3I', poly.vertices[0], poly.vertices[i+1], poly.vertices[i+2]))
+                uv0 = uv_layer[poly.loop_indices[0]].uv
+                uv1 = uv_layer[poly.loop_indices[i+1]].uv
+                uv2 = uv_layer[poly.loop_indices[i+2]].uv
+                f.write(pack('6f', uv0.x, uv0.y, uv1.x, uv1.y, uv2.x, uv2.y))
         
         f.close()
         print("written:", fn)

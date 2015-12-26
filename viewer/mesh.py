@@ -18,6 +18,7 @@ class Mesh(object):
         self.positions = []
         self.normals = []
         self.triangles = []
+        self.uvmap = []
         self.display_list = 0
         if(filename):
             self.loadFromFile(filename)
@@ -38,6 +39,9 @@ class Mesh(object):
         for i in range(num_tris):
             triangle = struct.unpack('3I', f.read(12))
             self.triangles.append(triangle)
+            uv = struct.unpack('6f', f.read(24))
+            print uv
+            self.uvmap.append(uv)
             
         f.close()
         
@@ -46,10 +50,16 @@ class Mesh(object):
         glNewList(self.display_list, GL_COMPILE)
         glBegin(GL_TRIANGLES)
         glColor3f(1.0, 0.5, 0.0)
+        triangle_index = 0
         for triangle in self.triangles:
-            for vertex_index in triangle:
-                glNormal3fv(self.normals[vertex_index])
-                glVertex3fv(self.positions[vertex_index])
+            print triangle,triangle_index
+            index = 0
+            for vertex_id in triangle:
+                glTexCoord2fv(self.uvmap[triangle_index][index*2:index*2+2])
+                index += 1
+                glNormal3fv(self.normals[vertex_id])
+                glVertex3fv(self.positions[vertex_id])
+            triangle_index += 1
         glEnd()
         glEndList()
         

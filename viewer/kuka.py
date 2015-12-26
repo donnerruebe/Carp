@@ -8,6 +8,7 @@ import json
 from sceneGraph import GroupNode, MeshNode
 from mesh import Mesh
 import translation
+from numpy import dot
 
 class Kuka(object):
     '''
@@ -20,10 +21,8 @@ class Kuka(object):
         mesh.setMesh(self.meshes[component.get("mesh")])
         node.addNode(mesh)
         t = translation.translation_matrix(component.get("position",[0,0,0]))
-        node.setDefaultMatrix(t)
         r = translation.rotation_from_euler(component.get("orientation",[0,0,0]))
-        node.setMatrix(r)
-        print node.getMatrix()
+        node.setDefaultMatrix(dot(t,r))
         for child in component.get("children"):
             node.addNode(self.addToSceneGraph(child))
         return node

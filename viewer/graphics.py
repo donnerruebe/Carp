@@ -45,11 +45,10 @@ def drawGrid():
 
 def closestPointOnLine(point, line_start, line_end):
     # fixme
-    d_line = line_end - line_start
+    d_line = line_end[:3] - line_start[:3]
     d_line /= np.linalg.norm(d_line)
-    print d_line
-    d_point = point - line_start
-    return line_start + d_line * np.dot(d_line, d_point)
+    d_point = point[:3] - line_start[:3]
+    return np.append(line_start[:3] + d_line * np.dot(d_line, d_point), 1.0)
 
 def main():
     pygame.init()
@@ -57,6 +56,17 @@ def main():
     pygame.display.set_mode(display, DOUBLEBUF|OPENGL|RESIZABLE)
     
     kuka = Kuka()
+    
+    # TODO: Texture class.
+    textureSurface = pygame.image.load("../resources/robots/Kuka/texture.png")
+    textureData = pygame.image.tostring(textureSurface, "RGBA", 1)
+    width = textureSurface.get_width()
+    height = textureSurface.get_height()
+    texture = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, texture)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData)
     
     '''meshes = []
     meshes.append(Mesh("../meshes/Achse_000.mesh"))
@@ -104,6 +114,7 @@ def main():
     target = np.array([3, 0, 3, 1.0])
     target_hovered = False
     target_clicked = False
+    target_click_position = target
 
     camera_angles = [0,-90]
     camera_position = np.array([0.0,-7.0,1.0,1.0])
@@ -187,9 +198,14 @@ def main():
         normalized_screen_target /= normalized_screen_target[3]
         mouse_distance = np.linalg.norm(np.multiply(normalized_screen_target[0:2] - normalized_mouse_pos[0:2], display))
         target_hovered = (mouse_distance < 16.0)
-        target_clicked = mouse_buttons[0] and (target_hovered or target_clicked)
+        if mouse_buttons[0] and target_hovered and not target_clicked:
+            target_click_position = target
+            target_clicked = True
+        if not mouse_buttons[0]:
+            target_clicked = False
+        
         if target_clicked:
-            target = closestPointOnLine(target, camera_position, mouse_world_pos)
+            target = closestPointOnLine(target_click_position, camera_position, mouse_world_pos)
 
 # rendering
         
@@ -205,22 +221,26 @@ def main():
                 angular_velocities[i] *= -1
         glPopMatrix()'''
         glEnable(GL_LIGHTING)
+        glEnable(GL_TEXTURE_2D)
         glPushMatrix()
         kuka.draw(np.identity(4))
         glPopMatrix()
         glDisable(GL_LIGHTING)
+        glDisable(GL_TEXTURE_2D)
         
         # draw target
         glBegin(GL_POINTS)
-        if target_hovered:
+        if target_clicked:
+            glColor3f(1,1,0)
+        elif target_hovered:
             glColor3f(1,0,0)
         else:
             glColor3f(.5,.5,.5)
-        glVertex4f(target[0], target[1], target[2], target[3])
+        glVertex4fv(target)
         glEnd()
         glBegin(GL_LINES)
         glVertex4f(target[0], target[1], 0.0, target[3])
-        glVertex4f(target[0], target[1], target[2], target[3])
+        glVertex4fv(target)
         glEnd()
         
         drawGrid()
