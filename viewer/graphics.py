@@ -134,6 +134,7 @@ def main():
     glEnable(GL_LINE_SMOOTH)
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+    glEnable(GL_CULL_FACE)
     
     prev_timestamp = pygame.time.get_ticks()
     frame_time = 0
@@ -208,6 +209,16 @@ def main():
             target = closestPointOnLine(target_click_position, camera_position, mouse_world_pos)
 
 # rendering
+        
+        # draw robot shadow (Just a quick, temporary hack)
+        glPushMatrix()
+        shadow_matrix = np.identity(4)
+        shadow_matrix[2,2] = 0
+        glColor3f(0.5,0.5,0.5)
+        glDepthMask(False)
+        kuka.draw(shadow_matrix)
+        glDepthMask(True)
+        glPopMatrix()
         
         # draw robot
         '''glEnable(GL_LIGHTING)

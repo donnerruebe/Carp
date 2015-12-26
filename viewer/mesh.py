@@ -49,7 +49,6 @@ class Mesh(object):
         self.display_list = glGenLists(1)
         glNewList(self.display_list, GL_COMPILE)
         glBegin(GL_TRIANGLES)
-        glColor3f(1.0, 0.5, 0.0)
         triangle_index = 0
         for triangle in self.triangles:
             print triangle,triangle_index
