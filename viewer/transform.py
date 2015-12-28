@@ -48,26 +48,32 @@ def rotation_from_euler(angles):
     result[2,2] = cos_phi * cos_theta;
     return result
 
+def rotation_from_euler_deg(angles_in_degrees):
+    angles_in_radians = [math.radians(angles_in_degrees[0]), math.radians(angles_in_degrees[1]), math.radians(angles_in_degrees[2])]
+    return rotation_from_euler(angles_in_radians)
 
-def rotation_matrix(angle, direction, point=None):
+def rotation_matrix(angle, axis, center=None):
     sina = math.sin(angle)
     cosa = math.cos(angle)
-    direction = unit_vector(direction[:3])
+    axis = unit_vector(axis[:3])
     # rotation matrix around unit vector
     R = numpy.diag([cosa, cosa, cosa])
-    R += numpy.outer(direction, direction) * (1.0 - cosa)
-    direction *= sina
-    R += numpy.array([[ 0.0,         -direction[2],  direction[1]],
-                      [ direction[2], 0.0,          -direction[0]],
-                      [-direction[1], direction[0],  0.0]])
+    R += numpy.outer(axis, axis) * (1.0 - cosa)
+    axis *= sina
+    R += numpy.array([[ 0.0, -axis[2], axis[1]],
+                      [ axis[2], 0.0, -axis[0]],
+                      [-axis[1], axis[0], 0.0]])
     M = numpy.identity(4)
     M[:3, :3] = R
-    if point is not None:
+    if center is not None:
         # rotation not around origin
-        point = numpy.array(point[:3], dtype=numpy.float64, copy=False)
-        M[:3, 3] = point - numpy.dot(R, point)
+        center = numpy.array(center[:3], dtype=numpy.float64, copy=False)
+        M[:3, 3] = center - numpy.dot(R, center)
     return M
 
+def rotation_matrix_deg(angle_in_degrees, axis, center=None):
+    angle_in_radians = math.radians(angle_in_degrees) 
+    return rotation_matrix(angle_in_radians, axis, center)
 
 def rotation_from_matrix(matrix):
     R = numpy.array(matrix, dtype=numpy.float64, copy=False)

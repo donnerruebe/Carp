@@ -9,46 +9,61 @@ PathComponent
 
 MESH'''
 
-from OpenGL.GL import *
 import numpy as np
+import transform
 
 class GroupNode(object):
     def __init__(self):
-        self.list=[]
-        self.basematrix=np.identity(4)
-        self.movematrix=np.identity(4)
+        self.children = []
+        self.local_transform = np.identity(4)
         
-    def addNode(self,obj):
-        if(True):
-            self.list.append(obj)
+    def addChild(self, obj):
+        self.children.append(obj)
     
-    def draw(self,matrix):
-        self.drawChildren(matrix.dot(self.basematrix.dot(self.movematrix)))
+    def draw(self, parent_transform):
+        self.drawChildren(np.dot(parent_transform, self.local_transform))
+
+    def getLocalTransform(self):
+        return self.local_transform
+    
+    def setLocalTransform(self, local_transform):
+        self.local_transform = local_transform
+    
+    def drawChildren(self, global_transform):
+        for item in self.children:
+            item.draw(global_transform)
+
+class RotationNode(GroupNode):
+    def __init__(self, config=None):
+        super(RotationNode,self).__init__()
+        self.angular_velocity = 1 # Just for testing. Initialize as 0 later.
+        if config is None:
+            self.min_angle = 0
+            self.max_angle = 0
+            self.angle = 0
+            self.axis = [1,0,0]
+            return
+        limits = config.get("limits", [0, 0])
+        self.min_angle = limits[0]
+        self.max_angle = limits[1]
+        self.angle = 0#config.get("default", (self.min_angle + self.max_angle)*0.5)
+        self.axis = config.get("axis", [1, 0, 0])
+        self.update(0)
+    
+    def update(self, time):
+        # Just for testing: constant speed pingponging within the limits.
+        self.angle += self.angular_velocity * time
+        if self.angle >= self.max_angle and self.angular_velocity > 0:
+            self.angle = self.max_angle * 2 - self.angle
+            self.angular_velocity *= -1
+        if self.angle <= self.min_angle and self.angular_velocity < 0:
+            self.angle = self.min_angle * 2 - self.angle
+            self.angular_velocity *= -1
         
-    def setDefaultMatrix(self,matrix):
-        self.basematrix=matrix
-        
-    def getDefaultMatrix(self):
-        return self.basematrix
-        
-    def getMatrix(self):
-        return self.movematrix
+        # update the GroupNode.local_transform
+        self.local_transform = transform.rotation_matrix_deg(self.angle, self.axis)
     
-    def setMatrix(self,matrix):
-        self.movematrix=matrix
-    
-    def multMatrix(self,matrix):
-        self.movematrix=self.movematrix.dot(matrix)
-    
-    def rMultMatrix(self,matrix):
-        self.movematrix=matrix.dot(self.movematrix)
-        
-    def drawChildren(self,matrix):
-        for item in self.list:
-            item.draw(matrix)
-         
-    
-class MeshNode:
+class MeshNode(object):
     def __init__(self):
         self.mesh=None
         
@@ -59,7 +74,6 @@ class MeshNode:
     TODO: Texturerweiterung ETC
     '''
 
-    def draw(self,matrix):
-        glLoadMatrixf(matrix.transpose())
-        self.mesh.draw()
+    def draw(self, transform):
+        self.mesh.draw(transform)
     

@@ -4,44 +4,29 @@ Created on 24.12.2015
 @author: Tilmann
 '''
 
-from math import sin, cos
+from math import *
 
 import pygame
 from pygame.locals import *
 
-from OpenGL.GL import *
-from OpenGL.GLU import *
+from OpenGL import GL
 
 import numpy as np
 
 from kuka import Kuka
 
-class Camera(object):
-    def __init__(self):
-        pass
-
-# TODO: Camera Class.
-def setCameraMatrix(display, angles, position):
-    glMatrixMode(GL_PROJECTION)
-    glLoadIdentity();
-    gluPerspective(45, (display[0]/float(display[1])), 0.1, 50.0)
-    glRotatef(angles[1], 1.0, 0.0, 0.0)
-    glRotatef(angles[0], 0.0, 0.0, 1.0)
-    glTranslatef(-position[0], -position[1], -position[2])
-
-def resizeDisplay(display):
-    glViewport(0,0,display[0],display[1])
+from camera import Camera
 
 def drawGrid():
-    glBegin(GL_LINES)
-    glColor3f(0,0,0)
+    GL.glBegin(GL.GL_LINES)
+    GL.glColor3f(0,0,0)
     for x in range(-5, 6):
-        glVertex3i(x, -5, 0)
-        glVertex3i(x, 5, 0)
+        GL.glVertex3i(x, -5, 0)
+        GL.glVertex3i(x, 5, 0)
     for y in range(-5, 6):
-        glVertex3i(-5, y, 0)
-        glVertex3i(5, y, 0)
-    glEnd()
+        GL.glVertex3i(-5, y, 0)
+        GL.glVertex3i(5, y, 0)
+    GL.glEnd()
 
 def closestPointOnLine(point, line_start, line_end):
     # fixme
@@ -62,11 +47,11 @@ def main():
     textureData = pygame.image.tostring(textureSurface, "RGBA", 1)
     width = textureSurface.get_width()
     height = textureSurface.get_height()
-    texture = glGenTextures(1)
-    glBindTexture(GL_TEXTURE_2D, texture)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData)
+    texture = GL.glGenTextures(1)
+    GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
+    GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
+    GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
+    GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, width, height, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textureData)
     
     '''meshes = []
     meshes.append(Mesh("../meshes/Achse_000.mesh"))
@@ -114,27 +99,34 @@ def main():
     target = np.array([3, 0, 3, 1.0])
     target_hovered = False
     target_clicked = False
-    target_click_position = target
+    target_depth = 0.0
 
     camera_angles = [0,-90]
     camera_position = np.array([0.0,-7.0,1.0,1.0])
-    mouse_sensitivity = 0.01
+    camera_is_rotating = False
+    camera_click_direction = np.array([0,0,1,0])
+    
+    camera = Camera()
+    camera.position = np.array([0.0,-7.0,1.0,1.0])
+    camera.angles = [0,0,90]
+    camera_fov = 60.0
     camera_clip_near = 0.1
     camera_clip_far = 50.0
+    camera.changeLens(display, camera_fov, camera_clip_near, camera_clip_far)
     
-    glEnable(GL_LIGHT0)
-    glLightfv(GL_LIGHT0, GL_POSITION, (1.0, -2.0, 3.0, 0.0))
-    glLightfv(GL_LIGHT0, GL_AMBIENT, (0.5, 0.5, 0.5, 1.0))
-    glColorMaterial ( GL_FRONT_AND_BACK, GL_AMBIENT ) ;
-    glEnable ( GL_COLOR_MATERIAL ) ;
-    glEnable(GL_DEPTH_TEST)
-    glClearColor(0.75,0.75,0.75,1.0)
-    glPointSize(16.0)
-    glEnable(GL_POINT_SMOOTH)
-    glEnable(GL_LINE_SMOOTH)
-    glEnable(GL_BLEND)
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-    glEnable(GL_CULL_FACE)
+    GL.glEnable(GL.GL_LIGHT0)
+    GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, (0.0, 0.0, 1.0, 0.0))
+    GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, (0.5, 0.5, 0.5, 1.0))
+    GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT)
+    GL.glEnable(GL.GL_COLOR_MATERIAL)
+    GL.glEnable(GL.GL_DEPTH_TEST)
+    GL.glClearColor(0.75,0.75,0.75,1.0)
+    GL.glPointSize(16.0)
+    GL.glEnable(GL.GL_POINT_SMOOTH)
+    GL.glEnable(GL.GL_LINE_SMOOTH)
+    GL.glEnable(GL.GL_BLEND)
+    GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+    GL.glEnable(GL.GL_CULL_FACE)
     
     prev_timestamp = pygame.time.get_ticks()
     frame_time = 0
@@ -145,24 +137,7 @@ def main():
         frame_time = timestamp - prev_timestamp
         prev_timestamp = timestamp
         
-# prepare rendering
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-        
-        setCameraMatrix(display, camera_angles, camera_position)
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-        
-        projection_matrix = np.array(glGetFloatv(GL_PROJECTION_MATRIX).transpose())
-        inverted_projection_matrix = np.linalg.inv(projection_matrix)
-        
-        '''projection_matrix = Matrix.rotation_z(camera_angles[0]) * Matrix.rotation_y(camera_angles[1])#Matrix.perspective(camera_clip_near, camera_clip_far, 1, 1)# Matrix.translation(camera_position) * 
-        print projection_matrix.entries
-        glMatrixMode(GL_PROJECTION)
-        glLoadMatrixf(projection_matrix.transposed().entries)
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()'''
-        
-# input
+# handle events
         mouse_wheel = 0
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -170,14 +145,24 @@ def main():
                 quit()
             elif event.type == pygame.VIDEORESIZE:
                 display = event.dict['size']
-                resizeDisplay(display)
+                GL.glViewport(0,0,display[0],display[1])
+                camera.changeLens(display, camera_fov, camera_clip_near, camera_clip_far)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 4:
                     mouse_wheel = 1
                 if event.button == 5:
                     mouse_wheel = -1
         
-        mouse_vel = pygame.mouse.get_rel()
+# prepare rendering
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+        
+        projection_matrix, inverted_projection_matrix = camera.update(frame_time, mouse_wheel)
+        GL.glMatrixMode(GL.GL_PROJECTION)
+        GL.glLoadMatrixf(projection_matrix.transpose())
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
+        
+# input (TODO: Clean up code duplication in Camera.update().)
         mouse_pos = pygame.mouse.get_pos()
         normalized_mouse_pos = np.array([mouse_pos[0]*2.0/display[0] - 1.0, 1.0 - mouse_pos[1]*2.0/display[1], 0.95, 1.0])
         mouse_world_pos = np.dot(inverted_projection_matrix, normalized_mouse_pos)
@@ -185,78 +170,62 @@ def main():
         mouse_buttons = pygame.mouse.get_pressed()
         keys = pygame.key.get_pressed()
 
-# camera movement
-        if mouse_buttons[2]:
-            camera_angles[0] += mouse_vel[0] * mouse_sensitivity * frame_time
-            camera_angles[1] += mouse_vel[1] * mouse_sensitivity * frame_time
-        movement_input = np.array([keys[pygame.K_d] - keys[pygame.K_a], keys[pygame.K_SPACE] - keys[pygame.K_c], keys[pygame.K_w] - keys[pygame.K_s], 0])
-        movement_direction = np.dot(projection_matrix.transpose(), movement_input)
-        speed = 0.0005 if keys[pygame.K_LSHIFT] else 0.005
-        camera_position += movement_direction * speed * frame_time
-
 # moving the target
         normalized_screen_target = np.dot(projection_matrix, target)
         normalized_screen_target /= normalized_screen_target[3]
         mouse_distance = np.linalg.norm(np.multiply(normalized_screen_target[0:2] - normalized_mouse_pos[0:2], display))
         target_hovered = (mouse_distance < 16.0)
         if mouse_buttons[0] and target_hovered and not target_clicked:
-            target_click_position = target
+            target_depth = normalized_screen_target[2]
             target_clicked = True
         if not mouse_buttons[0]:
             target_clicked = False
         
         if target_clicked:
-            target = closestPointOnLine(target_click_position, camera_position, mouse_world_pos)
+            target_depth += mouse_wheel * (0.0005 if keys[pygame.K_LSHIFT] else 0.005)
+            target = normalized_mouse_pos
+            target[2] = target_depth
+            target = np.dot(inverted_projection_matrix, target)
 
 # rendering
         
         # draw robot shadow (Just a quick, temporary hack)
-        glPushMatrix()
+        GL.glPushMatrix()
         shadow_matrix = np.identity(4)
         shadow_matrix[2,2] = 0
-        glColor3f(0.5,0.5,0.5)
-        glDepthMask(False)
+        GL.glColor3f(0.6,0.6,0.6)
+        GL.glDepthMask(False)
         kuka.draw(shadow_matrix)
-        glDepthMask(True)
-        glPopMatrix()
+        GL.glDepthMask(True)
+        GL.glPopMatrix()
         
         # draw robot
-        '''glEnable(GL_LIGHTING)
-        glPushMatrix()
-        for i in range(len(meshes)):
-            meshes[i].draw()
-            glTranslatef(translations[i][0], translations[i][1], translations[i][2])
-            glRotatef(angles[i], axes[i][0], axes[i][1], axes[i][2])
-            angles[i] += angular_velocities[i] * frame_time
-            if angles[i] >= limits[i][1] and angular_velocities[i] > 0 or angles[i] <= limits[i][0] and angular_velocities[i] < 0:
-                angular_velocities[i] *= -1
-        glPopMatrix()'''
-        glEnable(GL_LIGHTING)
-        glEnable(GL_TEXTURE_2D)
-        glPushMatrix()
+        GL.glEnable(GL.GL_LIGHTING)
+        GL.glEnable(GL.GL_TEXTURE_2D)
+        GL.glPushMatrix()
         kuka.draw(np.identity(4))
-        glPopMatrix()
-        glDisable(GL_LIGHTING)
-        glDisable(GL_TEXTURE_2D)
+        GL.glPopMatrix()
+        GL.glDisable(GL.GL_LIGHTING)
+        GL.glDisable(GL.GL_TEXTURE_2D)
         
         # draw target
-        glBegin(GL_POINTS)
+        GL.glBegin(GL.GL_POINTS)
         if target_clicked:
-            glColor3f(1,1,0)
+            GL.glColor3f(1,1,0)
         elif target_hovered:
-            glColor3f(1,0,0)
+            GL.glColor3f(1,0,0)
         else:
-            glColor3f(.5,.5,.5)
-        glVertex4fv(target)
-        glEnd()
-        glBegin(GL_LINES)
-        glVertex4f(target[0], target[1], 0.0, target[3])
-        glVertex4fv(target)
-        glEnd()
+            GL.glColor3f(.5,.5,.5)
+        GL.glVertex4fv(target)
+        GL.glEnd()
+        GL.glBegin(GL.GL_LINES)
+        GL.glVertex4f(target[0], target[1], 0.0, target[3])
+        GL.glVertex4fv(target)
+        GL.glEnd()
         
         drawGrid()
         
         pygame.display.flip()
-        pygame.time.wait(30)
+        pygame.time.wait(10)
 
 main()
