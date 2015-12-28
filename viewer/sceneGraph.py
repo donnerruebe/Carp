@@ -36,7 +36,7 @@ class GroupNode(object):
 class RotationNode(GroupNode):
     def __init__(self, config=None):
         super(RotationNode,self).__init__()
-        self.angular_velocity = 1 # Just for testing. Initialize as 0 later.
+        self.angular_velocity = 0.1 # Just for testing. Initialize as 0 later.
         if config is None:
             self.min_angle = 0
             self.max_angle = 0
@@ -46,7 +46,7 @@ class RotationNode(GroupNode):
         limits = config.get("limits", [0, 0])
         self.min_angle = limits[0]
         self.max_angle = limits[1]
-        self.angle = 0#config.get("default", (self.min_angle + self.max_angle)*0.5)
+        self.angle = config.get("default", (self.min_angle + self.max_angle)*0.5)
         self.axis = config.get("axis", [1, 0, 0])
         self.update(0)
     

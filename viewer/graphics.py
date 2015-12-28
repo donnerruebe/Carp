@@ -100,11 +100,6 @@ def main():
     target_hovered = False
     target_clicked = False
     target_depth = 0.0
-
-    camera_angles = [0,-90]
-    camera_position = np.array([0.0,-7.0,1.0,1.0])
-    camera_is_rotating = False
-    camera_click_direction = np.array([0,0,1,0])
     
     camera = Camera()
     camera.position = np.array([0.0,-7.0,1.0,1.0])
@@ -152,6 +147,10 @@ def main():
                     mouse_wheel = 1
                 if event.button == 5:
                     mouse_wheel = -1
+        
+# move the robot
+        for constraint in kuka.constraints.itervalues():
+            constraint.update(frame_time)
         
 # prepare rendering
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
