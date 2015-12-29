@@ -96,7 +96,7 @@ def main():
     angular_velocities = [.1,.1,.1,.1,.1,.1,.1]'''
     
     # TODO: clickable object class
-    target = np.array([3, 0, 3, 1.0])
+    target_position = np.array([-2.454, -0.375, 1.927, 1])
     target_hovered = False
     target_clicked = False
     target_depth = 0.0
@@ -149,8 +149,10 @@ def main():
                     mouse_wheel = -1
         
 # move the robot
-        kuka.update(frame_time, np.identity(4))
-        kuka.ik("Werkzeug", target)
+        for _ in range(10): # Make many small steps instead of one big one to improve convergence.
+            # TODO: Move the iterating into kuka.ik to reuse data between iterations and make guarantees about the result's accuracy.
+            kuka.update(frame_time, np.identity(4))
+            kuka.ik("Werkzeug", target_position[:3])
         
 # prepare rendering
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -169,9 +171,9 @@ def main():
         keys = pygame.key.get_pressed()
 
 # moving the target
-        normalized_screen_target = np.dot(projection_matrix, target)
+        normalized_screen_target = np.dot(projection_matrix, target_position)
         normalized_screen_target /= normalized_screen_target[3]
-        mouse_distance = np.linalg.norm(np.multiply(normalized_screen_target[0:2] - normalized_mouse_pos[0:2], display))
+        mouse_distance = np.linalg.norm(np.multiply(normalized_screen_target[:2] - normalized_mouse_pos[:2], display))
         target_hovered = (mouse_distance < 16.0)
         if mouse_buttons[0] and target_hovered and not target_clicked:
             target_depth = normalized_screen_target[2]
@@ -181,13 +183,14 @@ def main():
         
         if target_clicked:
             target_depth += mouse_wheel * (0.0005 if keys[pygame.K_LSHIFT] else 0.005)
-            target = normalized_mouse_pos
-            target[2] = target_depth
-            target = np.dot(inverted_projection_matrix, target)
+            target_position = normalized_mouse_pos
+            target_position[2] = target_depth
+            target_position = np.dot(inverted_projection_matrix, target_position)
+            target_position /= target_position[3]
 
 # rendering
         
-        # draw robot shadow (Just a quick, temporary hack)
+        # TEMPORARY: draw the robot's shadow
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glPushMatrix()
         shadow_matrix = np.identity(4)
@@ -218,11 +221,11 @@ def main():
             GL.glColor3f(1,0,0)
         else:
             GL.glColor3f(.5,.5,.5)
-        GL.glVertex4fv(target)
+        GL.glVertex4fv(target_position)
         GL.glEnd()
         GL.glBegin(GL.GL_LINES)
-        GL.glVertex4f(target[0], target[1], 0.0, target[3])
-        GL.glVertex4fv(target)
+        GL.glVertex4f(target_position[0], target_position[1], 0.0, target_position[3])
+        GL.glVertex4fv(target_position)
         GL.glEnd()
         
         drawGrid()
