@@ -10,48 +10,44 @@ from numpy import dot
 import transform
 
 import sceneGraph
-CONSTRAINT_TYPES = {"rotation":sceneGraph.RotationNode, "no type":None}
+
+# TODO: Should this variable be in sceneGraph?
+# Would it be acceptable to just turn the classes' names into the "type" strings of the config file?
+# Or maybe the other way around?
+NODE_TYPES = {"static":sceneGraph.StaticNode, "joint":sceneGraph.JointNode, "linear":sceneGraph.LinearNode}
 
 class Kuka(object):
     def addToSceneGraph(self, component):
-        # Add a constant transform node.
-        first_node = sceneGraph.GroupNode()
+        # Instantiate a node of appropriate type.
+        type_name = component.get("type", "static")
+        NodeType = NODE_TYPES.get(type_name)
+        if NodeType is None:
+            print("Invalid node type: '{0}'".format(type_name))
+            NodeType = NODE_TYPES["static"]
+        node = NodeType(component)
+        
+        # Add a mesh (or None) to the node.
+        node.setMesh(self.meshes.get(component.get("mesh")))
+        
+        # Set the node's base transform.
         t = transform.translation_matrix(component.get("position",[0,0,0]))
         r = transform.rotation_from_euler_deg(component.get("orientation",[0,0,0]))
-        first_node.setLocalTransform(dot(t,r))
+        node.setBaseTransform(dot(t,r))
         
-        # Chain all constraints together.
-        last_node = first_node
-        for constraint in component.get("constraints",()):
-            # Get the constraint's sceneGraph type.
-            constraint_typename = constraint.get("type", "no type")
-            constraint_type = CONSTRAINT_TYPES.get(constraint_typename)
-            if constraint_type is None:
-                print "Invalid constraint type '{0}'.".format(constraint_typename)
-                continue
-            
-            # Insert the constraint into the node chain.
-            constraint_node = constraint_type(constraint)
-            last_node.addChild(constraint_node)
-            last_node = constraint_node
-            
-            # Make the constraint accessible by name.
-            constraint_name = constraint.get("name")
-            if constraint_name is None:
-                print "Missing constraint name."
-            elif constraint_name in self.constraints:
-                print "Duplicate constraint name '{0}'.".format(constraint_name)
-            else:
-                self.constraints[constraint_name] = constraint_node
+        # Try to add the node to a dictionary for lookup by name.
+        name = component.get("name")
+        if name is None:
+            pass
+        elif name in self.named_nodes:
+            print("Duplicate node name: '{0}'".format(name))
+        else:
+            self.named_nodes[name] = node
         
-        # Add all children to the end of the IK chain.
-        mesh = sceneGraph.MeshNode()
-        mesh.setMesh(self.meshes[component.get("mesh")])
-        last_node.addChild(mesh)
-        for child in component.get("children"):
-            last_node.addChild(self.addToSceneGraph(child))
+        # Add the children.
+        for child in component.get("children",()):
+            node.addChild(self.addToSceneGraph(child))
         
-        return first_node
+        return node
 
     def __init__(self):
         self.directory = "../resources/robots/Kuka/"
@@ -64,8 +60,22 @@ class Kuka(object):
         for meshID in meshfiles:
             self.meshes[meshID] = Mesh(self.directory + meshfiles.get(meshID))
         
-        self.constraints = {}
+        self.named_nodes = {}
         self.root = self.addToSceneGraph(config.get("root"))
     
-    def draw(self, matrix):
-        self.root.draw(matrix)
+    def draw(self):
+        self.root.draw()
+    
+    def update(self, time, transfrom):
+        self.root.recursiveUpdate(time, transfrom)
+    
+    def ik(self, toolname, target):
+        # Get the tool position.
+        tool = self.named_nodes.get(toolname)
+        if tool is None:
+            print("Invalid tool name: '{0}'".format(toolname))
+            return
+        tool_position = transform.translation_from_matrix(tool.getGlobalTransform())
+        # Construct the Jacobian at the tool position.
+        # TODO: We need a decent way to extract the kinematic chain from the scene graph.
+        

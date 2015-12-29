@@ -11,69 +11,96 @@ MESH'''
 
 import numpy as np
 import transform
+from math import radians
 
-class GroupNode(object):
-    def __init__(self):
+class StaticNode(object):
+    def __init__(self, _=None):
         self.children = []
-        self.local_transform = np.identity(4)
-        
+        self.mesh = None
+        self.base_transform = np.identity(4)
+        self.global_transform = np.identity(4)
+
     def addChild(self, obj):
         self.children.append(obj)
     
-    def draw(self, parent_transform):
-        self.drawChildren(np.dot(parent_transform, self.local_transform))
+    def setMesh(self, mesh):
+        self.mesh = mesh
 
-    def getLocalTransform(self):
-        return self.local_transform
+    def setBaseTransform(self, base_transform):
+        self.base_transform = base_transform
     
-    def setLocalTransform(self, local_transform):
-        self.local_transform = local_transform
+    def getGlobalTransform(self):
+        return self.global_transform
     
-    def drawChildren(self, global_transform):
-        for item in self.children:
-            item.draw(global_transform)
+    def draw(self):
+        if self.mesh is not None:
+            self.mesh.draw(self.global_transform)
+        for child in self.children:
+            child.draw()
+    
+    def recursiveUpdate(self, time, parent_transform):
+        self.update(time, parent_transform)
+        for child in self.children:
+            child.recursiveUpdate(time, self.global_transform)
+    
+    def update(self, time, parent_transfrom):
+        self.global_transform = np.dot(parent_transfrom, self.base_transform)
+    
+    def getDerivatives(self, point):
+        return None
 
-class RotationNode(GroupNode):
-    def __init__(self, config=None):
-        super(RotationNode,self).__init__()
-        self.angular_velocity = 0.1 # Just for testing. Initialize as 0 later.
-        if config is None:
-            self.min_angle = 0
-            self.max_angle = 0
-            self.angle = 0
-            self.axis = [1,0,0]
-            return
+class JointNode(StaticNode):
+    def __init__(self, config={}):
+        super(type(self),self).__init__()
+        self.angular_velocity = 0.01 # Just for testing. Initialize as 0 later.
         limits = config.get("limits", [0, 0])
         self.min_angle = limits[0]
         self.max_angle = limits[1]
         self.angle = config.get("default", (self.min_angle + self.max_angle)*0.5)
         self.axis = config.get("axis", [1, 0, 0])
-        self.update(0)
+        self.axis /= np.linalg.norm(self.axis)
     
-    def update(self, time):
+    def update(self, time, parent_transfrom):
         # Just for testing: constant speed pingponging within the limits.
         self.angle += self.angular_velocity * time
-        if self.angle >= self.max_angle and self.angular_velocity > 0:
-            self.angle = self.max_angle * 2 - self.angle
-            self.angular_velocity *= -1
-        if self.angle <= self.min_angle and self.angular_velocity < 0:
-            self.angle = self.min_angle * 2 - self.angle
+        if self.angle >= self.max_angle and self.angular_velocity > 0 \
+        or self.angle <= self.min_angle and self.angular_velocity < 0:
             self.angular_velocity *= -1
         
-        # update the GroupNode.local_transform
-        self.local_transform = transform.rotation_matrix_deg(self.angle, self.axis)
-    
-class MeshNode(object):
-    def __init__(self):
-        self.mesh=None
+        rotation = transform.rotation_matrix_deg(self.angle, self.axis)
+        local_transform = np.dot(self.base_transform, rotation)
+        self.global_transform = np.dot(parent_transfrom, local_transform)
         
-    def setMesh(self,mesh):
-        self.mesh=mesh
-        
-    '''
-    TODO: Texturerweiterung ETC
-    '''
+    def getDerivatives(self, point):
+        angular_velocity = np.dot(self.global_transform[:3,:3], np.append(self.axis))
+        angular_velocity *= radians(1) # , because we're using degrees instead of radians for self.angle.
+        global_position = transform.translation_from_matrix(self.global_transform)
+        displacement = point - global_position
+        velocity = np.cross(angular_velocity, displacement)
+        return np.append(velocity, angular_velocity)
 
-    def draw(self, transform):
-        self.mesh.draw(transform)
+class LinearNode(StaticNode):
+    def __init__(self, config={}):
+        super(type(self),self).__init__()
+        self.velocity = 0.001 # Just for testing. Initialize as 0 later.
+        limits = config.get("limits", [0, 0])
+        self.min_displacement = limits[0]
+        self.max_displacement = limits[1]
+        self.displacement = config.get("default", (self.min_displacement + self.max_displacement)*0.5)
+        self.direction = np.array(config.get("direction", [1, 0, 0]), dtype=np.float64)
+        self.direction /= float(np.linalg.norm(self.direction))
     
+    def update(self, time, parent_transfrom):
+        # Just for testing: constant speed pingponging within the limits.
+        self.displacement += self.velocity * time
+        if self.displacement >= self.max_displacement and self.velocity > 0 \
+        or self.displacement <= self.min_displacement and self.velocity < 0:
+            self.velocity *= -1
+        
+        translation = transform.translation_matrix(self.direction * self.displacement)
+        local_transform = np.dot(self.base_transform, translation)
+        self.global_transform = np.dot(parent_transfrom, local_transform)
+        
+    def getDerivatives(self, point):
+        velocity = np.dot(self.global_transform[:4,:3], np.append(self.direction,[1]))
+        return np.append(velocity, [0,0,0])

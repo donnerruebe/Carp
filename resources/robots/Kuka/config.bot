@@ -11,75 +11,70 @@
 	},
 	"root": {
 		"mesh": "base",
-		"position": [0, 0, 0],
-		"orientation": [0, 0, 0],
 		"children": [{
-
+			"name": "Achse 1",
 			"mesh": "shoulder",
 			"position": [0, 0, 0.8],
-			"constraints": [{
-				"name": "Achse 1",
-				"type": "rotation",
-				"axis": [0, 0, 1],
-				"limits": [-5, 365],
-				"default": 180
-			}],
+			
+			"type": "joint",
+			"axis": [0, 0, 1],
+			"limits": [-5, 365],
+			"default": 180,
+			
 			"children": [{
-
+				"name": "Achse 2",
 				"mesh": "upperArm",
 				"position": [0.4, 0, 0],
-				"constraints": [{
-					"name": "Achse 2",
-					"type": "rotation",
-					"axis": [0, 1, 0],
-					"limits": [-180, 0],
-					"default": -110
-				}],
+				
+				"type": "joint",
+				"axis": [0, 1, 0],
+				"limits": [-180, 0],
+				"default": -110,
+				
 				"children": [{
-
+					"name": "Achse 3",
 					"mesh": "lowerArm",
 					"position": [1.2, 0, 0],
-					"constraints": [{
-						"name": "Achse 3",
-						"type": "rotation",
-						"axis": [0, 1, 0],
-						"limits": [-110, 110],
-						"default": 110
-					}],
+					
+					"type": "joint",
+					"axis": [0, 1, 0],
+					"limits": [-110, 110],
+					"default": 110,
+					
 					"children": [{
-
+						"name": "Achse 4",
 						"mesh": "wrist0",
 						"position": [0.7, 0, 0],
-						"constraints": [{
-							"name": "Achse 4",
-							"type": "rotation",
-							"axis": [1, 0, 0],
-							"limits": [-180, 180],
-							"default": 0
-						}],
+						
+						"type": "joint",
+						"axis": [1, 0, 0],
+						"limits": [-180, 180],
+						"default": 0,
+						
 						"children": [{
-
+							"name": "Achse 5",
 							"mesh": "wrist1",
 							"position": [0.3, 0, 0],
-							"constraints": [{
-								"name": "Achse 5",
-								"type": "rotation",
-								"axis": [0, 1, 0],
-								"limits": [-90, 90],
-								"default": 0
-							}],
+							
+							"type": "joint",
+							"axis": [0, 1, 0],
+							"limits": [-90, 90],
+							"default": 0,
+							
 							"children": [{
-
+								"name": "Achse 6",
 								"mesh": "wrist2",
 								"position": [0.25, 0, 0],
-								"constraints": [{
-									"name": "Achse 6",
-									"type": "rotation",
-									"axis": [1, 0, 0],
-									"limits": [-180, 180],
-									"default": 0
-								}],
-								"children": []
+								
+								"type": "joint",
+								"axis": [1, 0, 0],
+								"limits": [-180, 180],
+								"default": 0,
+								
+								"children": [{
+									"name": "Werkzeug",
+									"position": [1.214, 0.375, 0]
+								}]
 							}]
 						}]
 					}]

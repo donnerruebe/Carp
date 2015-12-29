@@ -149,8 +149,8 @@ def main():
                     mouse_wheel = -1
         
 # move the robot
-        for constraint in kuka.constraints.itervalues():
-            constraint.update(frame_time)
+        kuka.update(frame_time, np.identity(4))
+        kuka.ik("Werkzeug", target)
         
 # prepare rendering
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -159,7 +159,6 @@ def main():
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glLoadMatrixf(projection_matrix.transpose())
         GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glLoadIdentity()
         
 # input (TODO: Clean up code duplication in Camera.update().)
         mouse_pos = pygame.mouse.get_pos()
@@ -189,25 +188,29 @@ def main():
 # rendering
         
         # draw robot shadow (Just a quick, temporary hack)
+        GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glPushMatrix()
         shadow_matrix = np.identity(4)
         shadow_matrix[2,2] = 0
+        GL.glMultMatrixf(shadow_matrix);
+        GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glColor3f(0.6,0.6,0.6)
         GL.glDepthMask(False)
-        kuka.draw(shadow_matrix)
+        kuka.draw()
         GL.glDepthMask(True)
+        GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glPopMatrix()
+        GL.glMatrixMode(GL.GL_MODELVIEW)
         
         # draw robot
         GL.glEnable(GL.GL_LIGHTING)
         GL.glEnable(GL.GL_TEXTURE_2D)
-        GL.glPushMatrix()
-        kuka.draw(np.identity(4))
-        GL.glPopMatrix()
+        kuka.draw()
         GL.glDisable(GL.GL_LIGHTING)
         GL.glDisable(GL.GL_TEXTURE_2D)
         
         # draw target
+        GL.glLoadIdentity()
         GL.glBegin(GL.GL_POINTS)
         if target_clicked:
             GL.glColor3f(1,1,0)
