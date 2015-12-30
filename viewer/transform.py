@@ -143,3 +143,11 @@ def scale_from_matrix(matrix):
     origin = numpy.real(V[:, i[-1]]).squeeze()
     origin /= origin[3]
     return factor, origin, direction
+
+def rotation_translation_scale_matrix(euler_angles_in_degrees, position, scale):
+    result = rotation_from_euler_deg(euler_angles_in_degrees)
+    result *= scale
+    result[:3, 3] = position[:3]
+    result[3, 3] = 1.0
+    return result
+    

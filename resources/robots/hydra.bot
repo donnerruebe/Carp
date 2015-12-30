@@ -1,0 +1,232 @@
+{
+	"name": "Hydra Bot 3000",
+	"files": {
+		"base": "Kuka/Achse_000.mesh",
+		"shoulder": "Kuka/Achse_001.mesh",
+		"upperArm": "Kuka/Achse_002.mesh",
+		"lowerArm": "Kuka/Achse_003.mesh",
+		"wrist0": "Kuka/Achse_004.mesh",
+		"wrist1": "Kuka/Achse_005.mesh",
+		"fork": "Kuka/Achse_006.mesh"
+	},
+"root": {
+"mesh": "base",
+"children": [{
+"name": "Achse 1",
+"mesh": "shoulder",
+"position": [0, 0, 0.8],
+
+"joint": "revolute",
+"axis": [0, 0, 1],
+"limits": [-5, 365],
+"default": 180,
+
+"children": [{
+"name": "Achse 2",
+"mesh": "upperArm",
+"position": [0.4, 0, 0],
+
+"joint": "revolute",
+"axis": [0, 1, 0],
+"limits": [-180, 0],
+"default": -110,
+
+"children": [{
+"name": "Achse 3",
+"mesh": "lowerArm",
+"position": [1.2, 0, 0],
+
+"joint": "revolute",
+"axis": [0, 1, 0],
+"limits": [-150, 150],
+"default": 110,
+
+"children": [{
+"name": "Achse 4",
+"mesh": "wrist0",
+"position": [0.7, 0, 0],
+
+"joint": "revolute",
+"axis": [1, 0, 0],
+"limits": [-3e+38, 3e+38],
+"default": 0,
+
+"children": [{
+"name": "Achse 5",
+"mesh": "wrist1",
+"position": [0.3, 0, 0],
+
+"joint": "revolute",
+"axis": [0, 1, 0],
+"limits": [-120, 120],
+"default": 0,
+
+"children": [{
+"name": "Achse 6",
+"position": [0.25, 0, 0],
+
+"joint": "revolute",
+"axis": [1, 0, 0],
+"limits": [-3e+38, 3e+38],
+"default": 0,
+
+"children": [{
+"position": [0.2, 0, 0],
+"orientation": [0, 0, -90],
+"scale": 0.5,
+	"mesh": "base",
+	"children": [{
+	"name": "Achse 1L",
+	"mesh": "shoulder",
+	"position": [0, 0, 0.8],
+
+	"joint": "revolute",
+	"axis": [0, 0, 1],
+	"limits": [-5, 365],
+	"default": 180,
+
+	"children": [{
+	"name": "Achse 2L",
+	"mesh": "upperArm",
+	"position": [0.4, 0, 0],
+
+	"joint": "revolute",
+	"axis": [0, 1, 0],
+	"limits": [-180, 0],
+	"default": -110,
+
+	"children": [{
+	"name": "Achse 3L",
+	"mesh": "lowerArm",
+	"position": [1.2, 0, 0],
+
+	"joint": "revolute",
+	"axis": [0, 1, 0],
+	"limits": [-150, 150],
+	"default": 110,
+
+	"children": [{
+	"name": "Achse 4L",
+	"mesh": "wrist0",
+	"position": [0.7, 0, 0],
+
+	"joint": "revolute",
+	"axis": [1, 0, 0],
+	"limits": [-3e+38, 3e+38],
+	"default": 0,
+
+	"children": [{
+	"name": "Achse 5L",
+	"mesh": "wrist1",
+	"position": [0.3, 0, 0],
+
+	"joint": "revolute",
+	"axis": [0, 1, 0],
+	"limits": [-120, 120],
+	"default": 0,
+
+	"children": [{
+	"name": "Achse 6L",
+	"mesh": "fork",
+	"position": [0.25, 0, 0],
+
+	"joint": "revolute",
+	"axis": [1, 0, 0],
+	"limits": [-3e+38, 3e+38],
+	"default": 0,
+
+	"children": [{
+	"name": "WerkzeugL",
+	"position": [1.214, 0, 0]
+	}]
+	}]
+	}]
+	}]
+	}]
+	}]
+	}]
+},{
+"position": [0.2, 0, 0],
+"orientation": [0, 0, 90],
+"scale": 0.5,
+	"mesh": "base",
+	"children": [{
+	"name": "Achse 1R",
+	"mesh": "shoulder",
+	"position": [0, 0, 0.8],
+
+	"joint": "revolute",
+	"axis": [0, 0, 1],
+	"limits": [-5, 365],
+	"default": 180,
+
+	"children": [{
+	"name": "Achse 2R",
+	"mesh": "upperArm",
+	"position": [0.4, 0, 0],
+
+	"joint": "revolute",
+	"axis": [0, 1, 0],
+	"limits": [-180, 0],
+	"default": -110,
+
+	"children": [{
+	"name": "Achse 3R",
+	"mesh": "lowerArm",
+	"position": [1.2, 0, 0],
+
+	"joint": "revolute",
+	"axis": [0, 1, 0],
+	"limits": [-150, 150],
+	"default": 110,
+
+	"children": [{
+	"name": "Achse 4R",
+	"mesh": "wrist0",
+	"position": [0.7, 0, 0],
+
+	"joint": "revolute",
+	"axis": [1, 0, 0],
+	"limits": [-3e+38, 3e+38],
+	"default": 0,
+
+	"children": [{
+	"name": "Achse 5R",
+	"mesh": "wrist1",
+	"position": [0.3, 0, 0],
+
+	"joint": "revolute",
+	"axis": [0, 1, 0],
+	"limits": [-120, 120],
+	"default": 0,
+
+	"children": [{
+	"name": "Achse 6R",
+	"mesh": "fork",
+	"position": [0.25, 0, 0],
+
+	"joint": "revolute",
+	"axis": [1, 0, 0],
+	"limits": [-3e+38, 3e+38],
+	"default": 0,
+
+	"children": [{
+	"name": "WerkzeugR",
+	"position": [1.214, 0, 0]
+	}]
+	}]
+	}]
+	}]
+	}]
+	}]
+	}]
+
+}]
+}]
+}]
+}]
+}]
+}]
+}]
+}
+}

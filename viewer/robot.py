@@ -14,11 +14,12 @@ import sceneGraph
 # TODO: Should this variable be in sceneGraph?
 # Would it be acceptable to just turn the classes' names into the "joint" strings of the config file?
 # Or maybe the other way around?
-JOINT_TYPES = {"fixed":sceneGraph.FixedJointNode,
-              "revolute":sceneGraph.RevoluteJointNode,
-              "prismatic":sceneGraph.PrismaticJointNode}
+JOINT_TYPES = {"fixed":sceneGraph.FixedJoint,
+              "revolute":sceneGraph.RevoluteJoint,
+              "prismatic":sceneGraph.PrismaticJoint,
+              "screw":sceneGraph.ScrewJoint}
 
-class Kuka(object):
+class Robot(object):
     def addToSceneGraph(self, component):
         # Instantiate a node of appropriate type.
         type_name = component.get("joint", "fixed")
@@ -32,9 +33,10 @@ class Kuka(object):
         node.setMesh(self.meshes.get(component.get("mesh")))
         
         # Set the node's base transform.
-        t = transform.translation_matrix(component.get("position",[0,0,0]))
-        r = transform.rotation_from_euler_deg(component.get("orientation",[0,0,0]))
-        node.setBaseTransform(np.dot(t,r))
+        position = component.get("position",[0,0,0])
+        orientation = component.get("orientation",[0,0,0])
+        scale = component.get("scale",1)
+        node.setBaseTransform(transform.rotation_translation_scale_matrix(orientation, position, scale))
         
         # Try to add the node to a dictionary for lookup by name.
         name = component.get("name")
@@ -51,16 +53,16 @@ class Kuka(object):
         
         return node
 
-    def __init__(self):
-        self.directory = "../resources/robots/Kuka/"
-        f = open(self.directory + "config.bot", "r")
+    def __init__(self, directory, filename):
+        f = open(directory + filename, "r")
         config = json.load(f)
         f.close()
         
+        # TODO: Store meshes in a resource manager to allow robots to share them.
         self.meshes = {}
         meshfiles = config.get("files",())
         for meshID in meshfiles:
-            self.meshes[meshID] = Mesh(self.directory + meshfiles.get(meshID))
+            self.meshes[meshID] = Mesh(directory + meshfiles.get(meshID))
         
         self.named_nodes = {}
         self.root = self.addToSceneGraph(config.get("root"))
@@ -73,17 +75,22 @@ class Kuka(object):
     
     #def ikMove(self, toolname, distance, angular_distance):
     
-    def ik(self, toolname, target_position):
-        # TODO: Take a target orientation into consideration.
-        # Get the current tool position.
+    def ik(self, toolname, target_position, target_orientation):
+        # Get the current tool position and orientation.
         tool = self.named_nodes.get(toolname)
         if tool is None:
             print("Invalid tool name: '{0}'".format(toolname))
             return
-        tool_position = transform.translation_from_matrix(tool.getGlobalTransform())
+        tool_transform = tool.getGlobalTransform()
+        tool_position = transform.translation_from_matrix(tool_transform)
+        target_rotation_matrix = transform.rotation_from_euler_deg(target_orientation)
+        relative_rotation = np.identity(4)
+        relative_rotation[:3,:3] = np.dot(target_rotation_matrix[:3,:3], tool_transform[:3,:3].transpose())
+        (angle, axis, _) = transform.rotation_from_matrix(relative_rotation)
+        orientation_change = axis * angle
         
         # Count the degrees of freedom in the tool's kinematic chain.
-        kinematic_chain = tool.getKinematicChain()
+        kinematic_chain = tool.getKinematicChain() # TODO: Allow using only a sub-chain. (Or use weights?)
         chain_mobility = 0
         for joint in kinematic_chain:
             chain_mobility += joint.getMobility() # NOTE: We could pack the mobility into the kinematic_chain to save some getMobility calls.
@@ -106,7 +113,7 @@ class Kuka(object):
         
         # Use the pseudoinverse of the jacobian to estimate the required parameter changes.
         inverse_jacobian = np.linalg.pinv(jacobian, 0.01) # NOTE: pinv's second parameter gives us extra stability at the cost of accuracy.
-        delta_worldspace = np.append(target_position - tool_position, [0,0,0]) # TODO: The [0,0,0] is the desired change in orientation.
+        delta_worldspace = np.append(target_position - tool_position, orientation_change)
         delta_parameters = np.dot(inverse_jacobian, delta_worldspace)
         delta_parameters /= 10 # TEMPORARY: Make many small steps instead of one big one to improve convergence.
         

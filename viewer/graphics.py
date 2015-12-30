@@ -4,20 +4,16 @@ Created on 24.12.2015
 @author: Tilmann
 '''
 
-from math import *
-
 import pygame
-from pygame.locals import *
-
-from OpenGL import GL
-
 import numpy as np
 
-from kuka import Kuka
-
+from OpenGL import GL
+from robot import Robot
 from camera import Camera
 
-def drawGrid():
+def prepareGrid():
+    display_list = GL.glGenLists(1)
+    GL.glNewList(display_list, GL.GL_COMPILE)
     GL.glBegin(GL.GL_LINES)
     GL.glColor3f(0,0,0)
     for x in range(-5, 6):
@@ -27,20 +23,19 @@ def drawGrid():
         GL.glVertex3i(-5, y, 0)
         GL.glVertex3i(5, y, 0)
     GL.glEnd()
+    GL.glEndList()
+    return display_list
 
-def closestPointOnLine(point, line_start, line_end):
-    # fixme
-    d_line = line_end[:3] - line_start[:3]
-    d_line /= np.linalg.norm(d_line)
-    d_point = point[:3] - line_start[:3]
-    return np.append(line_start[:3] + d_line * np.dot(d_line, d_point), 1.0)
-
+def drawGrid(grid):
+    GL.glCallList(grid);
+    
 def main():
     pygame.init()
     display = (800,600)
-    pygame.display.set_mode(display, DOUBLEBUF|OPENGL|RESIZABLE)
+    pygame.display.set_mode(display, pygame.DOUBLEBUF | pygame.OPENGL | pygame.RESIZABLE)
     
-    kuka = Kuka()
+    grid = prepareGrid()
+    robot = Robot("../resources/robots/", "kuka.bot")
     
     # TODO: Texture class.
     textureSurface = pygame.image.load("../resources/robots/Kuka/texture.png")
@@ -52,48 +47,6 @@ def main():
     GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
     GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
     GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, width, height, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textureData)
-    
-    '''meshes = []
-    meshes.append(Mesh("../meshes/Achse_000.mesh"))
-    meshes.append(Mesh("../meshes/Achse_001.mesh"))
-    meshes.append(Mesh("../meshes/Achse_002.mesh"))
-    meshes.append(Mesh("../meshes/Achse_003.mesh"))
-    meshes.append(Mesh("../meshes/Achse_004.mesh"))
-    meshes.append(Mesh("../meshes/Achse_005.mesh"))
-    meshes.append(Mesh("../meshes/Achse_006.mesh"))
-    
-    translations = [
-        (0, 0, 0.8),
-        (0.4, 0, 0),
-        (1.2, 0, 0),
-        (0.7, 0, 0),
-        (0.3, 0, 0),
-        (0.25, 0, 0),
-        (1.2, -0.3, 0)
-        ]
-    
-    axes = [
-        (0, 0, 1.0),
-        (0, 1.0, 0),
-        (0, 1.0, 0),
-        (1.0, 0, 0),
-        (0, 1.0, 0),
-        (1.0, 0, 0),
-        (0, 1.0, 0)
-        ]
-    
-    limits = [
-        (-5, 365),
-        (-180, 0),
-        (-110, 110),
-        (-180, 180),
-        (-90, 90),
-        (-180, 180),
-        (90, 90)
-        ]
-    
-    angles = [0,0,0,0,0,0,0]
-    angular_velocities = [.1,.1,.1,.1,.1,.1,.1]'''
     
     # TODO: clickable object class
     target_position = np.array([-2.454, -0.375, 1.927, 1])
@@ -151,8 +104,8 @@ def main():
 # move the robot
         for _ in range(10): # Make many small steps instead of one big one to improve convergence.
             # TODO: Move the iterating into kuka.ik to reuse data between iterations and make guarantees about the result's accuracy.
-            kuka.update(frame_time, np.identity(4))
-            kuka.ik("Werkzeug", target_position[:3])
+            robot.update(frame_time, np.identity(4))
+            robot.ik("Werkzeug", target_position[:3], [180,0,0]) # TODO: Add a way to input the target orientation.
         
 # prepare rendering
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -199,7 +152,7 @@ def main():
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glColor3f(0.6,0.6,0.6)
         GL.glDepthMask(False)
-        kuka.draw()
+        robot.draw()
         GL.glDepthMask(True)
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glPopMatrix()
@@ -208,7 +161,7 @@ def main():
         # draw robot
         GL.glEnable(GL.GL_LIGHTING)
         GL.glEnable(GL.GL_TEXTURE_2D)
-        kuka.draw()
+        robot.draw()
         GL.glDisable(GL.GL_LIGHTING)
         GL.glDisable(GL.GL_TEXTURE_2D)
         
@@ -228,7 +181,7 @@ def main():
         GL.glVertex4fv(target_position)
         GL.glEnd()
         
-        drawGrid()
+        drawGrid(grid)
         
         pygame.display.flip()
         pygame.time.wait(10)

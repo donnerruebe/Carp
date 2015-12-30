@@ -1,13 +1,13 @@
 {
 	"name": "Kuka KR C2",
 	"files": {
-		"base": "Achse_000.mesh",
-		"shoulder": "Achse_001.mesh",
-		"upperArm": "Achse_002.mesh",
-		"lowerArm": "Achse_003.mesh",
-		"wrist0": "Achse_004.mesh",
-		"wrist1": "Achse_005.mesh",
-		"wrist2": "Achse_006.mesh"
+		"base": "Kuka/Achse_000.mesh",
+		"shoulder": "Kuka/Achse_001.mesh",
+		"upperArm": "Kuka/Achse_002.mesh",
+		"lowerArm": "Kuka/Achse_003.mesh",
+		"wrist0": "Kuka/Achse_004.mesh",
+		"wrist1": "Kuka/Achse_005.mesh",
+		"fork": "Kuka/Achse_006.mesh"
 	},
 	"root": {
 		"mesh": "base",
@@ -38,7 +38,7 @@
 					
 					"joint": "revolute",
 					"axis": [0, 1, 0],
-					"limits": [-110, 110],
+					"limits": [-150, 150],
 					"default": 110,
 					
 					"children": [{
@@ -48,7 +48,7 @@
 						
 						"joint": "revolute",
 						"axis": [1, 0, 0],
-						"limits": [-180, 180],
+						"limits": [-3e+38, 3e+38],
 						"default": 0,
 						
 						"children": [{
@@ -58,17 +58,17 @@
 							
 							"joint": "revolute",
 							"axis": [0, 1, 0],
-							"limits": [-90, 90],
+							"limits": [-120, 120],
 							"default": 0,
 							
 							"children": [{
 								"name": "Achse 6",
-								"mesh": "wrist2",
+								"mesh": "fork",
 								"position": [0.25, 0, 0],
 								
 								"joint": "revolute",
 								"axis": [1, 0, 0],
-								"limits": [-180, 180],
+								"limits": [-3e+38, 3e+38],
 								"default": 0,
 								
 								"children": [{
