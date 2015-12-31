@@ -77,6 +77,7 @@ class RevoluteJoint(FixedJoint):
         self.angle = config.get("default", (self.min_angle + self.max_angle)*0.5)
         self.axis = config.get("axis", [1, 0, 0])
         self.axis /= np.linalg.norm(self.axis)
+        self.ik_weight = config.get("weight", 1) # more weight = more motion
     
     def update(self, time, parent_transfrom):
         rotation = transform.rotation_matrix_deg(self.angle, self.axis)
@@ -92,11 +93,11 @@ class RevoluteJoint(FixedJoint):
         global_position = transform.translation_from_matrix(self.global_transform)
         displacement = point - global_position
         velocity = np.cross(angular_velocity, displacement)
-        derivatives = np.append(velocity, angular_velocity)
+        derivatives = np.append(velocity, angular_velocity) * self.ik_weight
         return np.expand_dims(derivatives, axis=1)
     
     def changeParameters(self, delta):
-        self.angle = min(max(self.angle + delta[0], self.min_angle), self.max_angle)
+        self.angle = min(max(self.angle + delta[0] * self.ik_weight, self.min_angle), self.max_angle)
 
 class PrismaticJoint(FixedJoint):
     def __init__(self, config={}):
@@ -107,6 +108,7 @@ class PrismaticJoint(FixedJoint):
         self.displacement = config.get("default", (self.min_displacement + self.max_displacement)*0.5)
         self.direction = np.array(config.get("axis", [1, 0, 0]), dtype=np.float64)
         self.direction /= float(np.linalg.norm(self.direction))
+        self.ik_weight = config.get("weight", 1) # hight weight = less motion
     
     def update(self, time, parent_transfrom):
         translation = transform.translation_matrix(self.direction * self.displacement)
@@ -118,11 +120,11 @@ class PrismaticJoint(FixedJoint):
     
     def getDerivatives(self, point):
         velocity = np.dot(self.global_transform[:3,:3], self.direction)
-        derivatives = np.append(velocity, [0,0,0])
+        derivatives = np.append(velocity, [0,0,0]) * self.ik_weight
         return np.expand_dims(derivatives, axis=1)
     
     def changeParameters(self, delta):
-        self.displacement = min(max(self.displacement + delta[0], self.min_displacement), self.max_displacement)
+        self.displacement = min(max(self.displacement + delta[0] * self.ik_weight, self.min_displacement), self.max_displacement)
 
 class ScrewJoint(FixedJoint):
     def __init__(self, config={}):
@@ -134,6 +136,7 @@ class ScrewJoint(FixedJoint):
         self.axis = config.get("axis", [1, 0, 0])
         self.axis /= np.linalg.norm(self.axis)
         self.lead = config.get("lead", 0) # Axial motion per turn.
+        self.ik_weight = config.get("weight", 1) # hight weight = less motion
     
     def update(self, time, parent_transfrom):
         rotation = transform.rotation_matrix_deg(self.angle, self.axis)
@@ -151,8 +154,8 @@ class ScrewJoint(FixedJoint):
         global_position = transform.translation_from_matrix(self.global_transform)
         displacement = point - global_position
         velocity = np.cross(angular_velocity, displacement) + angular_velocity * self.lead
-        derivatives = np.append(velocity, angular_velocity)
+        derivatives = np.append(velocity, angular_velocity) * self.ik_weight
         return np.expand_dims(derivatives, axis=1)
     
     def changeParameters(self, delta):
-        self.angle = min(max(self.angle + delta[0], self.min_angle), self.max_angle)
+        self.angle = min(max(self.angle + delta[0] * self.ik_weight, self.min_angle), self.max_angle)

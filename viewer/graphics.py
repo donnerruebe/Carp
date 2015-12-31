@@ -106,6 +106,7 @@ def main():
                               pygame.K_2:"hydra.json",
                               pygame.K_3:"screw.json",
                               pygame.K_4:"xyz.json",
+                              pygame.K_5:"weights_test.json",
                               pygame.K_0:"empty.json"}
                 if event.key in robot_dict:
                     robot = Robot("../resources/robots/", robot_dict[event.key])

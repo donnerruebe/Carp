@@ -1,0 +1,42 @@
+{
+	"name": "IK Weights Test",
+	"files": {
+		"cube":"xyz/x.mesh",
+		"guide":"xyz/y.mesh"
+	},
+	"root": {
+		"mesh":"guide",
+		"scale":0.2,
+		"children":[{
+			"mesh":"cube",
+			"joint":"prismatic",
+			"axis":[1,0,0],
+			"limits":[-4,4],
+			"weight":0.5,
+			"children":[{
+				"mesh":"guide",
+				"position":[5,0,1],
+				"children":[{
+					"mesh":"cube",
+					"joint":"prismatic",
+					"axis":[1,0,0],
+					"limits":[-4,4],
+					"children":[{
+						"mesh":"guide",
+						"position":[5,0,1],
+						"children":[{
+							"mesh":"cube",
+							"joint":"prismatic",
+							"axis":[1,0,0],
+							"limits":[-4,4],
+							"weight":2,
+							"children":[{
+								"name":"Werkzeug"
+							}]
+						}]
+					}]
+				}]
+			}]
+		}]
+	}
+}
