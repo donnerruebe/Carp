@@ -28,14 +28,14 @@ def prepareGrid():
 
 def drawGrid(grid):
     GL.glCallList(grid);
-    
+
 def main():
     pygame.init()
     display = (800,600)
     pygame.display.set_mode(display, pygame.DOUBLEBUF | pygame.OPENGL | pygame.RESIZABLE)
     
     grid = prepareGrid()
-    robot = Robot("../resources/robots/", "kuka.bot")
+    robot = Robot("../resources/robots/", "kuka.json")
     
     # TODO: Texture class.
     textureSurface = pygame.image.load("../resources/robots/Kuka/texture.png")
@@ -49,7 +49,8 @@ def main():
     GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, width, height, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textureData)
     
     # TODO: clickable object class
-    target_position = np.array([-2.454, -0.375, 1.927, 1])
+    target_position = np.array([2.454, 0.375, 1.927, 1])
+    target_orientation = [0,0,0]
     target_hovered = False
     target_clicked = False
     target_depth = 0.0
@@ -100,12 +101,19 @@ def main():
                     mouse_wheel = 1
                 if event.button == 5:
                     mouse_wheel = -1
-        
+            elif event.type == pygame.KEYDOWN:
+                robot_dict = {pygame.K_1:"kuka.json",
+                              pygame.K_2:"hydra.json",
+                              pygame.K_3:"screw.json",
+                              pygame.K_4:"xyz.json",
+                              pygame.K_0:"empty.json"}
+                if event.key in robot_dict:
+                    robot = Robot("../resources/robots/", robot_dict[event.key])
 # move the robot
         for _ in range(10): # Make many small steps instead of one big one to improve convergence.
             # TODO: Move the iterating into kuka.ik to reuse data between iterations and make guarantees about the result's accuracy.
             robot.update(frame_time, np.identity(4))
-            robot.ik("Werkzeug", target_position[:3], [180,0,0]) # TODO: Add a way to input the target orientation.
+            robot.ik("Werkzeug", target_position[:3], target_orientation) # TODO: Add a way to input the target orientation.
         
 # prepare rendering
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)

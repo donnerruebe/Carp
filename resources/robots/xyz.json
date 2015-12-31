@@ -1,0 +1,57 @@
+{
+	"name": "xyz",
+	"files": {
+		"x":"xyz/x.mesh",
+		"y":"xyz/y.mesh",
+		"z":"xyz/z.mesh",
+		"frame":"xyz/frame.mesh",
+		"axis1":"Gimbal/axis1.mesh",
+		"axis2":"Gimbal/axis2.mesh",
+		"axis3":"Gimbal/axis3.mesh"
+	},
+	"root": {
+		"mesh":"frame",
+		"children":[{
+			"mesh":"z",
+			"position":[0,0,5.5],
+			"joint":"prismatic",
+			"axis":[0,0,1],
+			"limits":[-4,4],
+			"children":[{
+				"mesh":"y",
+				"joint":"prismatic",
+				"axis":[0,1,0],
+				"limits":[-4,4],
+				"children":[{
+					"mesh":"x",
+					"joint":"prismatic",
+					"axis":[1,0,0],
+					"limits":[-4,4],
+					"children":[{
+						"position":[0,0,-2],
+						"mesh":"axis1",
+						"joint":"revolute",
+						"axis":[0,0,1],
+						"limits":[-180,180],
+						"children":[{
+							"mesh":"axis2",
+							"joint":"revolute",
+							"axis":[0,1,0],
+							"limits":[-180,180],
+							"children":[{
+								"mesh":"axis3",
+								"joint":"revolute",
+								"axis":[1,0,0],
+								"limits":[-180,180],
+								"children":[{
+									"name":"Werkzeug",
+									"position":[0,0,-1]
+								}]
+							}]
+						}]
+					}]
+				}]
+			}]
+		}]
+	}
+}

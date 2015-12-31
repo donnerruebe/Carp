@@ -18,8 +18,8 @@
 			
 			"joint": "revolute",
 			"axis": [0, 0, 1],
-			"limits": [-5, 365],
-			"default": 180,
+			"limits": [-185, 185],
+			"default": 0,
 			
 			"children": [{
 				"name": "Achse 2",
@@ -28,7 +28,7 @@
 				
 				"joint": "revolute",
 				"axis": [0, 1, 0],
-				"limits": [-180, 0],
+				"limits": [-155, 35],
 				"default": -110,
 				
 				"children": [{
@@ -38,7 +38,7 @@
 					
 					"joint": "revolute",
 					"axis": [0, 1, 0],
-					"limits": [-150, 150],
+					"limits": [-130, 154],
 					"default": 110,
 					
 					"children": [{
@@ -48,7 +48,7 @@
 						
 						"joint": "revolute",
 						"axis": [1, 0, 0],
-						"limits": [-3e+38, 3e+38],
+						"limits": [-350, 350],
 						"default": 0,
 						
 						"children": [{
@@ -58,7 +58,7 @@
 							
 							"joint": "revolute",
 							"axis": [0, 1, 0],
-							"limits": [-120, 120],
+							"limits": [-130, 130],
 							"default": 0,
 							
 							"children": [{
@@ -68,7 +68,7 @@
 								
 								"joint": "revolute",
 								"axis": [1, 0, 0],
-								"limits": [-3e+38, 3e+38],
+								"limits": [-350, 350],
 								"default": 0,
 								
 								"children": [{

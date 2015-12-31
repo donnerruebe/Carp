@@ -136,7 +136,7 @@
 	"default": 0,
 
 	"children": [{
-	"name": "WerkzeugL",
+	"name": "Werkzeug",
 	"position": [1.214, 0, 0]
 	}]
 	}]
@@ -211,7 +211,7 @@
 	"default": 0,
 
 	"children": [{
-	"name": "WerkzeugR",
+	"name": "Werkzeug2",
 	"position": [1.214, 0, 0]
 	}]
 	}]

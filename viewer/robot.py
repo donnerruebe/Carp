@@ -76,6 +76,8 @@ class Robot(object):
     #def ikMove(self, toolname, distance, angular_distance):
     
     def ik(self, toolname, target_position, target_orientation):
+        care_about_orientation = True
+        
         # Get the current tool position and orientation.
         tool = self.named_nodes.get(toolname)
         if tool is None:
@@ -83,11 +85,6 @@ class Robot(object):
             return
         tool_transform = tool.getGlobalTransform()
         tool_position = transform.translation_from_matrix(tool_transform)
-        target_rotation_matrix = transform.rotation_from_euler_deg(target_orientation)
-        relative_rotation = np.identity(4)
-        relative_rotation[:3,:3] = np.dot(target_rotation_matrix[:3,:3], tool_transform[:3,:3].transpose())
-        (angle, axis, _) = transform.rotation_from_matrix(relative_rotation)
-        orientation_change = axis * angle
         
         # Count the degrees of freedom in the tool's kinematic chain.
         kinematic_chain = tool.getKinematicChain() # TODO: Allow using only a sub-chain. (Or use weights?)
@@ -111,9 +108,24 @@ class Robot(object):
             jacobian[:,current_column:current_column+joint_mobility] = derivatives
             current_column += joint_mobility
         
+        # Figure out the difference between the tool state and the target state
+        if care_about_orientation:
+            target_rotation_matrix = transform.rotation_from_euler_deg(target_orientation)
+            relative_rotation = np.identity(4)
+            relative_rotation[:3,:3] = np.dot(target_rotation_matrix[:3,:3], tool_transform[:3,:3].transpose())
+            for i in range(3):
+                relative_rotation[:3,i] /= np.linalg.norm(relative_rotation[:3,i]) # transform.rotation_from_matrix cannot handle scaling.
+            (angle, axis, _) = transform.rotation_from_matrix(relative_rotation)
+            orientation_change = axis * angle
+        position_change = target_position - tool_position
+        
         # Use the pseudoinverse of the jacobian to estimate the required parameter changes.
-        inverse_jacobian = np.linalg.pinv(jacobian, 0.01) # NOTE: pinv's second parameter gives us extra stability at the cost of accuracy.
-        delta_worldspace = np.append(target_position - tool_position, orientation_change)
+        if care_about_orientation:
+            inverse_jacobian = np.linalg.pinv(jacobian, 0.01) # NOTE: pinv's second parameter gives us extra stability at the cost of accuracy.
+            delta_worldspace = np.append(position_change, orientation_change)
+        else:
+            inverse_jacobian = np.linalg.pinv(jacobian[:3,:], 0.01) # NOTE: pinv's second parameter gives us extra stability at the cost of accuracy.
+            delta_worldspace = position_change
         delta_parameters = np.dot(inverse_jacobian, delta_worldspace)
         delta_parameters /= 10 # TEMPORARY: Make many small steps instead of one big one to improve convergence.
         

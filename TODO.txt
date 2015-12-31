@@ -1,0 +1,12 @@
+GUI.
+
+Currently all meshes share the same texture and no two robots can share mesh data.
+Make resource managers to load and share meshes and textures.
+
+Implement multi-target and orientationless IK.
+
+Detect and react to reaching a joint limit or failing to converge.
+
+Physics: Collision detection, momentum, speed limits.
+
+Visualize, modify and export robot joints.

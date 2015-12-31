@@ -1,0 +1,93 @@
+{
+	"name": "Screw Bot XR-9001",
+	"files": {
+		"bolt_long":"Screw/LongBolt.mesh",
+		"bolt_short":"Screw/ShortBolt.mesh",
+		"bolt_wide":"Screw/WideBolt.mesh",
+		"nut":"Screw/Nut.mesh",
+		"nut_wide":"Screw/WideNut.mesh",
+		"bolt_long_inverted":"Screw/AntiLongBolt.mesh",
+		"bolt_short_inverted":"Screw/AntiShortBolt.mesh",
+		"bolt_wide_inverted":"Screw/AntiWideBolt.mesh",
+		"nut_inverted":"Screw/AntiNut.mesh",
+		"nut_wide_inverted":"Screw/AntiWideNut.mesh",
+		"angle":"Screw/Angle.mesh"
+	},
+	"root": {
+		"scale":0.2,
+		"mesh":"nut_wide",
+		"position":[0,0,0.3],
+		"children":[{
+			"mesh":"bolt_wide",
+			"joint":"screw",
+			"axis": [0, 0, 1],
+			"limits": [-720, 0],
+			"lead": 3.0,
+			"children":[{
+				"mesh":"bolt_wide_inverted",
+				"position":[0, 0, 9],
+				"orientation":[0, 0, 0],
+				"children":[{
+					"mesh":"nut_wide_inverted",
+					"joint":"screw",
+					"axis": [0, 0, 1],
+					"limits": [-720, 0],
+					"lead": -3.0,
+					"children":[{
+		"mesh":"nut_wide",
+		"position":[4,0,0],
+		"orientation":[0,0,90],
+		"children":[{
+			"mesh":"bolt_wide",
+			"joint":"screw",
+			"axis": [0, 0, 1],
+			"limits": [-720, 0],
+			"lead": 3.0,
+			"children":[{
+				"mesh":"bolt_wide_inverted",
+				"position":[0, 0, 9],
+				"orientation":[0, 0, 0],
+				"children":[{
+					"mesh":"nut_wide_inverted",
+					"joint":"screw",
+					"axis": [0, 0, 1],
+					"limits": [-720, 0],
+					"lead": -3.0,
+					"children":[{
+		"mesh":"nut_wide",
+		"position":[4,0,0],
+		"orientation":[0,0,90],
+		"children":[{
+			"mesh":"bolt_wide",
+			"joint":"screw",
+			"axis": [0, 0, 1],
+			"limits": [-720, 0],
+			"lead": 3.0,
+			"children":[{
+				"mesh":"bolt_wide_inverted",
+				"position":[0, 0, 9],
+				"orientation":[0, 0, 0],
+				"children":[{
+					"mesh":"nut_wide_inverted",
+					"joint":"screw",
+					"axis": [0, 0, 1],
+					"limits": [-720, 0],
+					"lead": -3.0,
+					"children":[{
+						"name":"Werkzeug",
+						"position":[0, 0, 0],
+						"orientation":[0,-90,-90]
+					}]
+				}]
+			}]
+		}]
+					}]
+				}]
+			}]
+		}]
+					}]
+				}]
+			}]
+		}]
+	}
+}
