@@ -35,10 +35,10 @@ def main():
     pygame.display.set_mode(display, pygame.DOUBLEBUF | pygame.OPENGL | pygame.RESIZABLE)
     
     grid = prepareGrid()
-    robot = Robot("../resources/robots/", "kuka.json")
+    robot = Robot("resources/robots/", "kuka.json")
     
     # TODO: Texture class.
-    textureSurface = pygame.image.load("../resources/robots/Kuka/texture.png")
+    textureSurface = pygame.image.load("resources/robots/Kuka/texture.png")
     textureData = pygame.image.tostring(textureSurface, "RGBA", 1)
     width = textureSurface.get_width()
     height = textureSurface.get_height()
@@ -109,7 +109,7 @@ def main():
                               pygame.K_5:"weights_test.json",
                               pygame.K_0:"empty.json"}
                 if event.key in robot_dict:
-                    robot = Robot("../resources/robots/", robot_dict[event.key])
+                    robot = Robot("resources/robots/", robot_dict[event.key])
 # move the robot
         for _ in range(10): # Make many small steps instead of one big one to improve convergence.
             # TODO: Move the iterating into kuka.ik to reuse data between iterations and make guarantees about the result's accuracy.
@@ -195,4 +195,5 @@ def main():
         pygame.display.flip()
         pygame.time.wait(10)
 
-main()
+if __name__ == "__main__":
+    main()
